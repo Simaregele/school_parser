@@ -27,7 +27,7 @@ def get_urls_from_cat_page(url):
         soup = bs(request.content, 'lxml')
         schools = soup.find_all(class_='school-public-page')
         for url in schools:
-            urls_list.append(url.find('a')['href'])
+            urls_list.append(get_url_ftom_part(url.find('a')['href']))
         time.sleep(0.5)
     return urls_list
 
@@ -57,6 +57,8 @@ def get_url_ftom_part(url):
     return page_url
 
 NA = 'NAN'
+
+
 def get_school_info(url):
     """Lets parse school"""
     school_info = {}
@@ -64,6 +66,10 @@ def get_school_info(url):
     request = session.get(url, headers=headers)
     if request.status_code == 200:
         soup = bs(request.content, 'lxml')
+        try:
+            school_info['page_url'] = url
+        except:
+            school_info['page_url'] = NA
         try:
             school_info['country_f_url'] = get_info_from_url(url)[4]
         except:
@@ -76,37 +82,74 @@ def get_school_info(url):
             school_info['name_f_url'] = get_info_from_url(url)[6]
         except:
             school_info['name_f_url'] = NA
-        school_info['name'] = soup.find('h2').text.replace('\n', '').replace(' ', '')
-        school_info['img_link'] = soup.find('img', attrs={'typeof': 'foaf:Image'})['src']
-        school_info['short_desc'] = soup.find('h4').text.replace('\n', '').replace(' ', '')
-        school_info['add_f_desc'] = soup.find('div', class_='schooAddr').text
-        school_info_agr = soup.find('div', class_='school-about-info')
-        school_info['desc'] = school_info_agr.find('p', class_='school-about').text.replace('\r', '').replace('\n', '')
-        school_faccil = school_info_agr.find_all('li')
-        list_of_facil =[]
-        for fac in school_faccil:
-            list_of_facil.append(fac.text)
-        school_info['faccil'] = list_of_facil
-        try_map_coord = soup.find('div', id='block-block-86')
-        script = try_map_coord.find_all('script')[1].text
-        school_info['longit'] = script[script.find('[addr,'):script.find(']')].split(' ')[1].replace(',', '')
-        school_info['latid'] = script[script.find('[addr,'):script.find(']')].split(' ')[2].replace(',', '')
+        try:
+            school_info['name'] = soup.find('h2').text.replace('\n', '').replace(' ', '')
+        except:
+            school_info['name'] = NA
+        try:
+            school_info['img_link'] = soup.find('img', attrs={'typeof': 'foaf:Image'})['src']
+        except:
+            school_info['img_link'] = NA
+        try:
+            school_info['short_desc'] = soup.find('h4').text.replace('\n', '').replace(' ', '')
+        except:
+            school_info['short_desc'] = NA
+        try:
+            school_info['add_f_desc'] = soup.find('div', class_='schooAddr').text
+        except:
+            school_info['add_f_desc'] = NA
+        try:
+            school_info_agr = soup.find('div', class_='school-about-info')
+            school_info['desc'] = school_info_agr.find('p', class_='school-about').text.replace('\r', '').replace('\n', '')
+        except:
+            school_info['desc'] = NA
+        try:
+            school_faccil = school_info_agr.find_all('li')
+            list_of_facil =[]
+            for fac in school_faccil:
+                list_of_facil.append(fac.text)
+            school_info['faccil'] = list_of_facil
+        except:
+            school_info['faccil'] = NA
+        try:
+            try_map_coord = soup.find('div', id='block-block-86')
+            script = try_map_coord.find_all('script')[1].text
+            school_info['longit'] = script[script.find('[addr,'):script.find(']')].split(' ')[1].replace(',', '')
+            school_info['latid'] = script[script.find('[addr,'):script.find(']')].split(' ')[2].replace(',', '')
+        except:
+            school_info['longit'] = NA
+            school_info['latid'] = NA
         time.sleep(0.2)
         return school_info
 
+csv_columns = ['page_url', 'country_f_url', 'region_f_url', 'name_f_url', 'name', 'img_link', 'short_desc',
+               'add_f_desc', 'desc', 'faccil', 'longit', 'latid']
 
+
+def create_file(csv_columns):
+    with open('schools', 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+        writer.writeheader()
 
 print(get_info_from_url('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
 
-# session = requests.session()
-# request = session.get('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone', headers=headers)
-# if request.status_code == 200:
-#     soup = bs(request.content, 'lxml')
-#     try_map_coord = soup.find('div', id='block-block-86')
-#     script = try_map_coord.find_all('script')[1].text
-#     longit = script[script.find('[addr,'):script.find(']')].split(' ')[1].replace(',', '')
-#     latid = script[script.find('[addr,'):script.find(']')].split(' ')[2].replace(',', '')
-#     print(longit, latid)
 
-print(get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
+# print(get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
+
+
+create_file(csv_columns)
+
+
+with open('schools', 'r+', encoding="utf-8") as csvfile:
+    it = 0
+    writer = csv.DictWriter(csvfile, csv_columns)
+    for f_url in generate_cat_urls():
+        school_urls = get_urls_from_cat_page(f_url)
+        for sc_url in school_urls:
+            dict = get_school_info(sc_url)
+            print('School ', it, dict)
+            it += 1
+            writer.writerow(dict)
+
+
 
