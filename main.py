@@ -87,11 +87,12 @@ def get_school_info(url):
         except:
             school_info['name'] = NA
         try:
-            school_info['img_link'] = soup.find('img', attrs={'typeof': 'foaf:Image'})['src']
+            img_f = soup.find('div', class_='banner-area')
+            school_info['img_link'] = get_url_ftom_part(img_f.find('img', attrs={'typeof': 'foaf:Image'})['src'])
         except:
             school_info['img_link'] = NA
         try:
-            school_info['short_desc'] = soup.find('h4').text.replace('\n', '').replace(' ', '')
+            school_info['short_desc'] = soup.find('h4').text.replace('\n', '').replace('  ', '')
         except:
             school_info['short_desc'] = NA
         try:
@@ -127,7 +128,7 @@ csv_columns = ['page_url', 'country_f_url', 'region_f_url', 'name_f_url', 'name'
 
 
 def create_file(csv_columns):
-    with open('schools', 'w') as csvfile:
+    with open('schools', 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
         writer.writeheader()
 
@@ -137,12 +138,13 @@ print(get_info_from_url('https://www.ikointl.com/school/italy/reggio-calabria/ne
 # print(get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
 
 
-create_file(csv_columns)
+# create_file(csv_columns)
 
 
-with open('schools', 'r+', encoding="utf-8") as csvfile:
+with open('schools', 'w', encoding="utf-8", newline='') as csvfile:
     it = 0
     writer = csv.DictWriter(csvfile, csv_columns)
+    writer.writeheader()
     for f_url in generate_cat_urls():
         school_urls = get_urls_from_cat_page(f_url)
         for sc_url in school_urls:
@@ -150,6 +152,7 @@ with open('schools', 'r+', encoding="utf-8") as csvfile:
             print('School ', it, dict)
             it += 1
             writer.writerow(dict)
+
 
 
 
