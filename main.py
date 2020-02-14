@@ -83,14 +83,19 @@ def get_school_info(url):
         except:
             school_info['name_f_url'] = NA
         try:
-            school_info['name'] = soup.find('h2').text.replace('\n', '').replace(' ', '')
+            school_info['name'] = soup.find('h2').text.replace('\n', '')
         except:
             school_info['name'] = NA
         try:
             img_f = soup.find('div', class_='banner-area')
-            school_info['img_link'] = get_url_ftom_part(img_f.find('img', attrs={'typeof': 'foaf:Image'})['src'])
+            school_info['img_url'] = get_url_ftom_part(img_f.find('img', attrs={'typeof': 'foaf:Image'})['src'])
+
         except:
-            school_info['img_link'] = NA
+            school_info['img_url'] = NA
+        try:
+            school_info['img_name'] = soup.find('h2').text.replace('\n', '').replace(' ', '')
+        except:
+            school_info['img_name'] = NA
         try:
             school_info['short_desc'] = soup.find('h4').text.replace('\n', '').replace('  ', '')
         except:
@@ -123,7 +128,7 @@ def get_school_info(url):
         time.sleep(0.2)
         return school_info
 
-csv_columns = ['page_url', 'country_f_url', 'region_f_url', 'name_f_url', 'name', 'img_link', 'short_desc',
+csv_columns = ['page_url', 'country_f_url', 'region_f_url', 'name_f_url', 'name', 'img_url', 'img_name', 'short_desc',
                'add_f_desc', 'desc', 'faccil', 'longit', 'latid']
 
 
@@ -134,9 +139,13 @@ def create_file(csv_columns):
 
 print(get_info_from_url('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
 
+dict_temp = get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone')
+print(dict_temp)
 
-# print(get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone'))
-
+def save_img(img_url, img_name):
+    img_data = requests.get(img_url, headers=headers).content
+    with open(f'img/{img_name}.jpg', 'wb') as handler:
+        handler.write(img_data)
 
 # create_file(csv_columns)
 
@@ -149,6 +158,10 @@ with open('schools', 'w', encoding="utf-8", newline='') as csvfile:
         school_urls = get_urls_from_cat_page(f_url)
         for sc_url in school_urls:
             dict = get_school_info(sc_url)
+            try:
+                save_img(dict['img_url'], dict['img_name'])
+            except:
+                pass
             print('School ', it, dict)
             it += 1
             writer.writerow(dict)
