@@ -142,9 +142,9 @@ print(get_info_from_url('https://www.ikointl.com/school/italy/reggio-calabria/ne
 dict_temp = get_school_info('https://www.ikointl.com/school/italy/reggio-calabria/new-kite-zone')
 print(dict_temp)
 
-def save_img(img_url, img_name):
+def save_img(img_url, img_name, folder):
     img_data = requests.get(img_url, headers=headers).content
-    with open(f'img/{img_name}.jpg', 'wb') as handler:
+    with open(f'{folder}/{img_name}.jpg', 'wb') as handler:
         handler.write(img_data)
 
 # create_file(csv_columns)
@@ -159,7 +159,7 @@ with open('schools', 'w', encoding="utf-8", newline='') as csvfile:
         for sc_url in school_urls:
             dict = get_school_info(sc_url)
             try:
-                save_img(dict['img_url'], dict['img_name'])
+                save_img(dict['img_url'], dict['img_name'], 'img')
             except:
                 pass
             print('School ', it, dict)
